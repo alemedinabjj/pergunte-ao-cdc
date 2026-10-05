@@ -39,7 +39,7 @@ geração (LLM-as-judge), upload de documentos pelo usuário.
 | `decreto-7962` | Decreto nº 7.962/2013 — comércio eletrônico | perguntas sobre compra online |
 | `decreto-11034` | Decreto nº 11.034/2022 — Lei do SAC | perguntas sobre atendimento |
 
-- O texto vem do planalto.gov.br por um script (`scripts/fetch-laws.ts`)
+- O texto vem do planalto.gov.br por um script (`apps/api/scripts/fetch-laws.ts`)
   que remove o texto riscado (`<strike>`, redação revogada) e gera `.txt`
   limpos em `data/laws/`. Esses arquivos são **versionados no repo**, e a
   ingestão nunca acessa a internet.
@@ -90,6 +90,7 @@ geração (LLM-as-judge), upload de documentos pelo usuário.
 pergunte-ao-cdc/
 ├── apps/
 │   ├── api/                      # NestJS
+│   │   ├── scripts/fetch-laws.ts   # snapshot das leis (usa o catálogo da API)
 │   │   └── src/modules/
 │   │       ├── ingestion/        # use-case + CLI: parse → chunk → embed → upsert
 │   │       ├── retrieval/        # busca híbrida (domain/application/infrastructure)
@@ -98,10 +99,9 @@ pergunte-ao-cdc/
 │   └── web/                      # React + Vite
 ├── packages/contracts/           # schemas Zod compartilhados (HTTP + eventos SSE)
 ├── data/laws/                    # snapshots .txt
-├── eval/                         # dataset.jsonl, runner, results/
+├── eval/                         # dataset.jsonl e results/ (o runner fica em apps/api/src/eval)
 ├── docs/adr/                     # 0001 SQL-first, 0002 híbrida+RRF, 0003 Ollama padrão
 ├── docs/design/                  # este documento
-├── scripts/fetch-laws.ts
 ├── docker-compose.yml
 └── README.md
 ```
