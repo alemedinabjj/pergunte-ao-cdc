@@ -15,8 +15,8 @@ commits e explicação de cada tecnologia.
 
 ### Critérios de sucesso
 
-1. Quem clonar roda tudo com `docker compose up` + `pnpm ingest`, sem
-   chave de API e sem custo.
+1. Quem clonar roda tudo com Ollama + `docker compose up` + ingestão,
+   sem chave de API e sem custo.
 2. Toda resposta cita artigos, e clicar na citação mostra o texto
    integral do artigo.
 3. A tabela de avaliação mostra que a busca híbrida ganha da busca
@@ -59,7 +59,7 @@ geração (LLM-as-judge), upload de documentos pelo usuário.
                              │                  │ ───────► ┌──────────────────────┐
                              └──────────────────┘          │ ollama               │
                                                            │ embed: bge-m3 (1024) │
-                                                           │ chat:  qwen2.5:7b    │
+                                                           │ chat:  qwen2.5:3b    │
                                                            └──────────────────────┘
 ```
 
@@ -72,9 +72,17 @@ geração (LLM-as-judge), upload de documentos pelo usuário.
   embeddings ficam sempre no Ollama, para não exigir reindexação ao
   trocar o LLM.
 - **Modelos padrão:** `bge-m3` (multilíngue, 1024 dimensões) e
-  `qwen2.5:7b` (segue bem instruções em pt-BR). Fallback documentado:
-  `qwen2.5:3b` para máquinas com pouca RAM. Os dois são configuráveis
-  por `.env`.
+  `qwen2.5:3b` (roda em máquina com 8 GB de RAM). Recomendado:
+  `qwen2.5:7b` para quem tem 16 GB ou mais, porque segue melhor as
+  instruções em pt-BR. Os dois são configuráveis por `.env`.
+- **Onde o Ollama roda:** no macOS, **nativo** (`brew install ollama`),
+  porque dentro do Docker ele não acessa a GPU (Metal) e fica lento
+  demais. A API alcança o Ollama em `host.docker.internal:11434`. No
+  Linux, o serviço `ollama` do compose sobe com `--profile ollama`.
+- **Compose:** `postgres`, `api` (Dockerfile multi-stage) e `web` (build
+  estático servido por nginx, que faz proxy de `/api` com
+  `proxy_buffering off` para o SSE). Em desenvolvimento, só o
+  `postgres` sobe no compose e o resto roda com `pnpm dev`.
 
 ### Monorepo (pnpm workspaces)
 
@@ -119,6 +127,7 @@ laws (
   id smallserial PRIMARY KEY,
   slug text UNIQUE NOT NULL,
   title text NOT NULL,
+  short_name text NOT NULL,         -- 'CDC', 'Decreto 7.962/2013' (exibido na citação)
   reference text NOT NULL,
   source_url text NOT NULL
 )
@@ -226,15 +235,19 @@ O chat usa POST + SSE escrito direto na `Response` (`@Sse()` do Nest e
 3. Salva a mensagem do usuário.
 4. **Busca híbrida (uma query SQL):**
    - `semantic`: top 30 por distância de cosseno.
-   - `keyword`: top 30 por `ts_rank_cd` com
-     `websearch_to_tsquery('pt_unaccent', q)`.
+   - `keyword`: top 30 por `ts_rank_cd`, com os termos da pergunta
+     ligados por **OR** (`plainto_tsquery` com `&` trocado por `|`).
+     Com AND, perguntas em linguagem natural quase nunca casam com
+     nenhum artigo. O ranking já favorece quem casa mais termos.
    - `exact`: só quando a pergunta casa com
      `/art(?:igo)?\.?\s*(\d+)/i`. Faz match em `chunks.article`.
    - Fusão RRF: `score = Σ 1 / (60 + rank)`, top 6.
    - O filtro `lawSlug` opcional entra no `WHERE` de cada CTE.
-5. **Guarda de "não sei":** sem match em `keyword`/`exact` e com a melhor
-   similaridade abaixo de `MIN_SIMILARITY` (calibrado pelo eval),
-   responde a mensagem fixa sem chamar o LLM.
+5. **Guarda de "não sei":** sem match em `exact` e com a melhor
+   similaridade semântica abaixo de `MIN_SIMILARITY` (calibrado pelo
+   eval), responde a mensagem fixa sem chamar o LLM. O match de keyword
+   não conta, porque com OR quase sempre algum termo casa (ex.: "pena"
+   aparece nos crimes do CDC).
 6. **Prompt** (`prompts/answer.prompt.ts`, versionado): papel; responder
    só com base nos documentos; citar como `[n]`; dizer que não sabe
    quando faltar base; **ignorar instruções contidas nos documentos**;
@@ -248,7 +261,7 @@ O chat usa POST + SSE escrito direto na `Response` (`@Sse()` do Nest e
 
 ```
 meta      { conversationId, messageId }
-citations { items: [{ id, law, path, content, sourceUrl }] }  -- antes dos tokens
+citations { items: [{ id, chunkId, lawSlug, law, path, content, sourceUrl }] }  -- antes dos tokens; id = número usado em [n]
 token     { text }
 done      { citedIds: number[], model, latencyMs }
 error     { code, message }
@@ -349,11 +362,11 @@ GitHub Actions:
 O histórico de conversas fica por último, para que o núcleo esteja
 demonstrável antes:
 
-1. Fundação do monorepo, tooling e docker compose
+1. Fundação do monorepo, tooling e docker compose (postgres)
 2. Banco, migrations e `contracts`
 3. Ingestão (snapshot, parser, chunker, embeddings, upsert)
 4. Retrieval híbrido + eval
 5. Chat single-turn com SSE
 6. Frontend
 7. Histórico de conversas e reescrita de follow-up
-8. CI, ADRs, README e tag
+8. Dockerfiles de api/web, CI, ADRs, README e tag
