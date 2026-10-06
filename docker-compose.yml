@@ -15,6 +15,43 @@ services:
       timeout: 3s
       retries: 10
 
+  # Roda uma vez e sai: migrations ficam fora do start da API.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: pergunte-ao-cdc-api:local
+    command: ['node', 'dist/database/migrate.js']
+    environment:
+      DATABASE_URL: postgres://cdc:cdc@postgres:5432/cdc
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: pergunte-ao-cdc-api:local
+    env_file:
+      - path: apps/api/.env
+        required: false
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://cdc:cdc@postgres:5432/cdc
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '${WEB_PORT:-8080}:8080'
+    depends_on:
+      - api
+
   # No Linux: docker compose --profile ollama up -d
   # No macOS, prefira o Ollama nativo (dentro do Docker ele não usa a GPU).
   ollama:

@@ -2,7 +2,7 @@
   "name": "api",
   "version": "0.0.0",
   "private": true,
-  "description": "API NestJS do pergunte-ao-cdc: ingestão, busca híbrida e chat com SSE.",
+  "description": "API NestJS do pergunte-ao-cdc: ingest\u00e3o, busca h\u00edbrida e chat com SSE.",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
@@ -51,5 +51,9 @@
     "typescript": "^5.9.3",
     "unplugin-swc": "^2.0.0",
     "vitest": "^4.1.11"
-  }
+  },
+  "files": [
+    "dist",
+    "drizzle"
+  ]
 }
