@@ -36,6 +36,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://cdc:cdc@postgres:5432/cdc
+      # O .env de desenvolvimento aponta para ../../data/laws; dentro da imagem as leis ficam aqui.
+      LAWS_DIR: /app/data/laws
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
     extra_hosts:
       - 'host.docker.internal:host-gateway'

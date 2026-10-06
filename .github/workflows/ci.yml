@@ -28,6 +28,8 @@ jobs:
       - run: pnpm build:contracts
       - name: Biome
         run: pnpm exec biome ci .
+      - name: Compose aponta a API para as leis de dentro da imagem
+        run: docker compose config | grep -q 'LAWS_DIR: /app/data/laws'
       - name: Typecheck
         run: pnpm typecheck
       - name: Testes unitários (api, web, contracts)
