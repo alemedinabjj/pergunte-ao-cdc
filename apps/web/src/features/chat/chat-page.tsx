@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api-client';
 import { queryKeys } from '../../lib/query-client';
-import { useChatSession } from './chat-session';
+import { useChatSession, useStartNewConversation } from './chat-session';
 import { Composer } from './components/composer';
 import { Disclaimer } from './components/disclaimer';
 import { EmptyState } from './components/empty-state';
@@ -20,6 +20,7 @@ interface ChatPageProps {
 
 export function ChatPage({ conversationId, savedTurns = [], sidebar, notice }: ChatPageProps) {
   const session = useChatSession();
+  const startNew = useStartNewConversation();
   const laws = useQuery({ queryKey: queryKeys.laws, queryFn: api.laws });
   const [selection, setSelection] = useState<{ turnKey: string; citationId: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -60,6 +61,15 @@ export function ChatPage({ conversationId, savedTurns = [], sidebar, notice }: C
             §
           </span>
           <span className="font-semibold">Pergunte ao CDC</span>
+          {turns.length > 0 && (
+            <button
+              type="button"
+              onClick={startNew}
+              className="ml-auto rounded-sm border border-line px-3 py-1 text-sm lg:hidden"
+            >
+              Nova conversa
+            </button>
+          )}
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6">
