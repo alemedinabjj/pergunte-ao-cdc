@@ -5,6 +5,7 @@ import {
   reciprocalRank,
   recommendThreshold,
   refusalTable,
+  reportHeader,
   summarize,
 } from './metrics';
 
@@ -70,5 +71,18 @@ describe('metrics', () => {
     ];
     expect(recommendThreshold(table, 20, 0.05)).toBe(0.6);
     expect(recommendThreshold(table, 10, 0.05)).toBe(0.5);
+  });
+});
+
+describe('reportHeader', () => {
+  it('names the embedding model actually used', () => {
+    const lines = reportHeader({
+      date: '2026-10-06',
+      embeddingModel: 'text-embedding-3-small',
+      total: 28,
+      inScope: 24,
+    });
+    expect(lines).toContain('- Modelo de embeddings: `text-embedding-3-small`');
+    expect(lines).toContain('- Perguntas: 28 (24 dentro do escopo, 4 fora)');
   });
 });

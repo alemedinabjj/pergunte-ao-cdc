@@ -75,3 +75,18 @@ export function recommendThreshold(
   const ok = table.filter((row) => row.falseRefusals / inScopeCount <= maxFalseRefusalRate);
   return ok.length > 0 ? Math.max(...ok.map((row) => row.threshold)) : null;
 }
+
+export function reportHeader(input: {
+  date: string;
+  embeddingModel: string;
+  total: number;
+  inScope: number;
+}): string[] {
+  return [
+    '# Avaliação do retrieval',
+    '',
+    `- Data: ${input.date}`,
+    `- Modelo de embeddings: \`${input.embeddingModel}\``,
+    `- Perguntas: ${input.total} (${input.inScope} dentro do escopo, ${input.total - input.inScope} fora)`,
+  ];
+}

@@ -1,6 +1,6 @@
 /**
  * Avalia só o retrieval (sem LLM): recall@k e MRR em três modos e a calibração do limiar
- * de "não sei". Precisa do Ollama com o modelo de embeddings e das leis já ingeridas.
+ * de "não sei". Precisa do provedor de embeddings configurado e das leis já ingeridas.
  *
  *   pnpm eval
  */
@@ -13,8 +13,8 @@ import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { z } from 'zod';
 import { ConfigModule } from '../config/config.module';
-import { ENV, type Env } from '../config/env';
 import { DatabaseModule } from '../database/database.module';
+import { EMBEDDER, type Embedder } from '../modules/llm/domain/embedder.port';
 import { LlmModule } from '../modules/llm/llm.module';
 import { RetrieveUseCase } from '../modules/retrieval/application/retrieve.use-case';
 import type { RetrievalMode, RetrievalResult } from '../modules/retrieval/domain/retrieval.types';
@@ -24,6 +24,7 @@ import {
   type Expected,
   recommendThreshold,
   refusalTable,
+  reportHeader,
   summarize,
 } from './metrics';
 
@@ -63,14 +64,15 @@ async function main(): Promise<void> {
   const app = await NestFactory.createApplicationContext(EvalModule, { logger: ['error', 'warn'] });
   try {
     const retrieve = app.get(RetrieveUseCase);
-    const env = app.get<Env>(ENV);
+    const embedder = app.get<Embedder>(EMBEDDER);
 
     const lines: string[] = [
-      '# Avaliação do retrieval',
-      '',
-      `- Data: ${new Date().toISOString().slice(0, 10)}`,
-      `- Modelo de embeddings: \`${env.OLLAMA_EMBED_MODEL}\``,
-      `- Perguntas: ${cases.length} (${inScope.length} dentro do escopo, ${cases.length - inScope.length} fora)`,
+      ...reportHeader({
+        date: new Date().toISOString().slice(0, 10),
+        embeddingModel: embedder.model,
+        total: cases.length,
+        inScope: inScope.length,
+      }),
       '',
       '## Recall e MRR (perguntas dentro do escopo)',
       '',
