@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17
+    environment:
+      POSTGRES_DB: cdc
+      POSTGRES_USER: cdc
+      POSTGRES_PASSWORD: cdc
+    ports:
+      - '${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cdc -d cdc']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # No Linux: docker compose --profile ollama up -d
+  # No macOS, prefira o Ollama nativo (dentro do Docker ele não usa a GPU).
+  ollama:
+    image: ollama/ollama
+    profiles: [ollama]
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  pgdata:
+  ollama:
