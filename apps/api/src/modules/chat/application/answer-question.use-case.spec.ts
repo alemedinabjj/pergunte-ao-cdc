@@ -74,7 +74,11 @@ class RepoStub implements ConversationsPort {
 function setup(llm = new FakeLlmClient({ chunks: ['Pode ', 'sim [1].'] })) {
   const retrieve = new RetrieveStub();
   const repo = new RepoStub();
-  const health = { up: true, ping: async () => health.up };
+  const health = {
+    up: true,
+    unavailableMessage: 'Confira a OPENAI_API_KEY.',
+    ping: async () => health.up,
+  };
   const useCase = new AnswerQuestionUseCase(retrieve, llm, health, repo, {
     MIN_SIMILARITY: 0.5,
     LLM_TIMEOUT_MS: 5_000,
@@ -186,7 +190,7 @@ describe('AnswerQuestionUseCase.run', () => {
     const useCase = new AnswerQuestionUseCase(
       new RetrieveStub(),
       llm,
-      { ping: async () => true },
+      { ping: async () => true, unavailableMessage: '' },
       repo,
       {
         MIN_SIMILARITY: 0.5,
@@ -217,11 +221,11 @@ describe('AnswerQuestionUseCase.prepare', () => {
     ).rejects.toBeInstanceOf(ConversationNotFoundError);
   });
 
-  it('throws LlmUnavailableError when Ollama is down', async () => {
+  it('throws LlmUnavailableError with the provider message when it is down', async () => {
     const { useCase, health } = setup();
     health.up = false;
-    await expect(useCase.prepare({ question: 'posso devolver?' })).rejects.toBeInstanceOf(
-      LlmUnavailableError,
+    await expect(useCase.prepare({ question: 'posso devolver?' })).rejects.toThrow(
+      new LlmUnavailableError('Confira a OPENAI_API_KEY.'),
     );
   });
 });

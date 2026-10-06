@@ -4,7 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ENV, type Env } from '../../../config/env';
 import { LlmRequestError, LlmUnavailableError } from '../../llm/domain/errors';
 import { type ChatMessage, LLM_CLIENT, type LlmClient } from '../../llm/domain/llm-client.port';
-import { OllamaHealth } from '../../llm/infrastructure/ollama.health';
+import { LLM_HEALTH, type LlmHealth } from '../../llm/domain/llm-health.port';
 import { RetrieveUseCase } from '../../retrieval/application/retrieve.use-case';
 import type { RetrievalResult } from '../../retrieval/domain/retrieval.types';
 import { extractCitedIds, toCitations } from '../domain/citations';
@@ -31,11 +31,7 @@ export type ConversationsPort = Pick<
   'create' | 'exists' | 'history' | 'addUserMessage' | 'addAssistantMessage'
 >;
 type RetrievePort = Pick<RetrieveUseCase, 'execute'>;
-type HealthPort = Pick<OllamaHealth, 'ping'>;
 type AnswerConfig = Pick<Env, 'MIN_SIMILARITY' | 'LLM_TIMEOUT_MS'>;
-
-export const OLLAMA_DOWN_MESSAGE =
-  'O modelo de linguagem não está respondendo. Verifique se o Ollama está rodando (ollama serve).';
 
 const TITLE_MAX = 60;
 
@@ -51,15 +47,14 @@ export class AnswerQuestionUseCase {
   constructor(
     @Inject(RetrieveUseCase) private readonly retrieve: RetrievePort,
     @Inject(LLM_CLIENT) private readonly llm: LlmClient,
-    @Inject(OllamaHealth) private readonly health: HealthPort,
+    @Inject(LLM_HEALTH) private readonly health: LlmHealth,
     @Inject(ConversationsRepository) private readonly conversations: ConversationsPort,
     @Inject(ENV) private readonly config: AnswerConfig,
   ) {}
 
   /** Tudo que pode falhar antes de abrir o stream (vira 404/503 em vez de evento de erro). */
   async prepare(input: ChatRequest): Promise<PreparedTurn> {
-    // O embedder roda no Ollama mesmo com Claude gerando a resposta.
-    if (!(await this.health.ping())) throw new LlmUnavailableError(OLLAMA_DOWN_MESSAGE);
+    if (!(await this.health.ping())) throw new LlmUnavailableError(this.health.unavailableMessage);
     const base = { question: input.question, lawSlug: input.lawSlug, history: [] };
     if (input.conversationId) {
       if (!(await this.conversations.exists(input.conversationId))) {

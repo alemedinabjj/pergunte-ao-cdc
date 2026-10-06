@@ -25,6 +25,7 @@
     "dotenv": "^18.0.5",
     "drizzle-orm": "^0.45.3",
     "nestjs-pino": "^5.3.1",
+    "openai": "^7.28.0",
     "pg": "^8.23.1",
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",

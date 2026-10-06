@@ -1,4 +1,9 @@
-export class OllamaHealth {
+import type { LlmHealth } from '../domain/llm-health.port';
+
+export class OllamaHealth implements LlmHealth {
+  readonly unavailableMessage =
+    'O Ollama não está respondendo. Verifique se ele está rodando (ollama serve).';
+
   constructor(private readonly baseUrl: string) {}
 
   /** Nunca lança: qualquer falha vira `false`. */

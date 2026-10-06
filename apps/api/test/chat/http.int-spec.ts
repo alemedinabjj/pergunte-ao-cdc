@@ -10,7 +10,7 @@ import { ChunksRepository } from '../../src/modules/ingestion/chunks.repository'
 import { IngestLawUseCase } from '../../src/modules/ingestion/ingest-law.use-case';
 import { EMBEDDER } from '../../src/modules/llm/domain/embedder.port';
 import { LLM_CLIENT } from '../../src/modules/llm/domain/llm-client.port';
-import { OllamaHealth } from '../../src/modules/llm/infrastructure/ollama.health';
+import { LLM_HEALTH } from '../../src/modules/llm/domain/llm-health.port';
 import { FakeEmbedder } from '../fakes/fake-embedder';
 import { FakeLlmClient } from '../fakes/fake-llm-client';
 import { parseSseBody } from '../support/sse';
@@ -30,7 +30,11 @@ const textParser = (res: request.Response, cb: (err: Error | null, body: string)
 describe('HTTP API', () => {
   let t: TestDatabase;
   let app: INestApplication;
-  const health = { up: true, ping: async () => health.up };
+  const health = {
+    up: true,
+    unavailableMessage: 'Confira a OPENAI_API_KEY.',
+    ping: async () => health.up,
+  };
   const llm = { current: new FakeLlmClient({ chunks: ['Pode ', 'sim [1].'] }) };
   const llmProxy = {
     get model() {
@@ -51,6 +55,7 @@ describe('HTTP API', () => {
     t = await startTestDatabase();
     process.env.DATABASE_URL = t.url;
     process.env.NODE_ENV = 'test';
+    process.env.OPENAI_API_KEY = 'sk-test-fake';
     process.env.LOG_LEVEL = 'error';
     const embedder = new FakeEmbedder();
     await new IngestLawUseCase(new ChunksRepository(t.db), embedder, {
@@ -63,7 +68,7 @@ describe('HTTP API', () => {
       .useValue(embedder)
       .overrideProvider(LLM_CLIENT)
       .useValue(llmProxy)
-      .overrideProvider(OllamaHealth)
+      .overrideProvider(LLM_HEALTH)
       .useValue(health)
       .compile();
     app = moduleRef.createNestApplication();
@@ -109,14 +114,14 @@ describe('HTTP API', () => {
     expect(res.body.code).toBe('CONVERSATION_NOT_FOUND');
   });
 
-  it('503 with actionable message when Ollama is down', async () => {
+  it('503 with the provider message when the LLM provider is down', async () => {
     health.up = false;
     const res = await request(app.getHttpServer())
       .post('/api/chat')
       .send({ question: 'posso devolver?' });
     expect(res.status).toBe(503);
     expect(res.body.code).toBe('LLM_UNAVAILABLE');
-    expect(res.body.message).toContain('ollama serve');
+    expect(res.body.message).toBe('Confira a OPENAI_API_KEY.');
   });
 
   it('aborts generation when the client disconnects', async () => {
@@ -198,14 +203,14 @@ describe('HTTP API', () => {
     expect(res.body).toEqual([expect.objectContaining({ slug: 'cdc', shortName: 'CDC' })]);
   });
 
-  it('health returns 503 and ollama: down when ping fails', async () => {
+  it('health returns 503 and llm: down when ping fails', async () => {
     expect((await request(app.getHttpServer()).get('/api/health')).body).toEqual({
       db: 'ok',
-      ollama: 'ok',
+      llm: 'ok',
     });
     health.up = false;
     const res = await request(app.getHttpServer()).get('/api/health');
     expect(res.status).toBe(503);
-    expect(res.body).toEqual({ db: 'ok', ollama: 'down' });
+    expect(res.body).toEqual({ db: 'ok', llm: 'down' });
   });
 });
