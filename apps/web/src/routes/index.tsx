@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { ChatPage } from '../features/chat/chat-page';
 
 export const Route = createFileRoute('/')({
-  component: () => <main className="p-8 font-law">Pergunte ao CDC</main>,
+  component: () => <ChatPage />,
 });
