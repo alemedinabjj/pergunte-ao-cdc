@@ -15,8 +15,9 @@ commits e explicação de cada tecnologia.
 
 ### Critérios de sucesso
 
-1. Quem clonar roda tudo com Ollama + `docker compose up` + ingestão,
-   sem chave de API e sem custo.
+1. Quem clonar roda tudo com uma chave da OpenAI + `docker compose up` +
+   ingestão, a um custo de centavos. Quem tiver máquina para isso pode
+   trocar para o Ollama e rodar 100% local, sem chave.
 2. Toda resposta cita artigos, e clicar na citação mostra o texto
    integral do artigo.
 3. A tabela de avaliação mostra que a busca híbrida ganha da busca
@@ -57,28 +58,32 @@ geração (LLM-as-judge), upload de documentos pelo usuário.
 │  React+Vite │              │                  │          │ + pgvector + unaccent│
 └─────────────┘              │                  │  HTTP    └──────────────────────┘
                              │                  │ ───────► ┌──────────────────────┐
-                             └──────────────────┘          │ ollama               │
-                                                           │ embed: bge-m3 (1024) │
-                                                           │ chat:  qwen2.5:3b    │
+                             └──────────────────┘          │ OpenAI (padrão)      │
+                                                           │ embed: 3-small (1024)│
+                                                           │ chat:  gpt-6-luna    │
                                                            └──────────────────────┘
 ```
 
 - **Abordagem:** RAG SQL-first com ports/adapters, **sem LangChain nem
   LlamaIndex**. Cada etapa (chunking, busca, fusão, prompt) fica explícita
   no código e coberta por teste.
-- **Provedores:** `Embedder` e `LlmClient` são interfaces. Adapters:
-  `OllamaEmbedder`, `OllamaLlmClient` e `AnthropicLlmClient`, este último
-  ativado com `LLM_PROVIDER=anthropic` e modelo definido por env. Os
-  embeddings ficam sempre no Ollama, para não exigir reindexação ao
-  trocar o LLM.
-- **Modelos padrão:** `bge-m3` (multilíngue, 1024 dimensões) e
-  `qwen2.5:3b` (roda em máquina com 8 GB de RAM). Recomendado:
-  `qwen2.5:7b` para quem tem 16 GB ou mais, porque segue melhor as
-  instruções em pt-BR. Os dois são configuráveis por `.env`.
-- **Onde o Ollama roda:** no macOS, **nativo** (`brew install ollama`),
-  porque dentro do Docker ele não acessa a GPU (Metal) e fica lento
-  demais. A API alcança o Ollama em `host.docker.internal:11434`. No
-  Linux, o serviço `ollama` do compose sobe com `--profile ollama`.
+- **Provedores (revisado em 2026-10-06):** o padrão passou a ser a
+  **OpenAI**, porque o Ollama com modelo de chat travou o MacBook de 8 GB
+  usado no desenvolvimento. `Embedder` e `LlmClient` continuam sendo
+  interfaces, com adapters:
+  - embeddings: `OpenAiEmbedder` (`text-embedding-3-small` com
+    `dimensions: 1024`, o que mantém o schema) ou `OllamaEmbedder`
+    (`bge-m3`), escolhido por `EMBEDDING_PROVIDER`;
+  - geração: `OpenAiLlmClient` (`gpt-6-luna` via Responses API, sem
+    `temperature`, com `reasoning.effort` baixo), `AnthropicLlmClient`
+    ou `OllamaLlmClient`, escolhido por `LLM_PROVIDER`.
+- **Saúde do provedor:** uma porta `LlmHealth` (`ping()` e uma mensagem
+  acionável). Para a OpenAI, o ping consulta o modelo configurado e
+  guarda o resultado por 60 s, para não somar latência a cada pergunta.
+  O `/api/health` passa a responder `{ db, llm }`.
+- **Ollama (opcional):** no macOS, nativo (`brew install ollama`); no
+  Linux, o serviço `ollama` do compose com `--profile ollama`. Modelos
+  sugeridos: `bge-m3` e `qwen2.5:7b` (16 GB de RAM ou mais).
 - **Compose:** `postgres`, `api` (Dockerfile multi-stage) e `web` (build
   estático servido por nginx, que faz proxy de `/api` com
   `proxy_buffering off` para o SSE). Em desenvolvimento, só o
@@ -218,7 +223,7 @@ GET    /api/conversations        → [{ id, title, createdAt }]
 GET    /api/conversations/:id    → { id, title, messages[] }
 DELETE /api/conversations/:id    → 204
 GET    /api/laws                 → [{ slug, title, reference }]
-GET    /api/health               → { db: 'ok'|'down', ollama: 'ok'|'down' }
+GET    /api/health               → { db: 'ok'|'down', llm: 'ok'|'down' }
 ```
 
 O chat usa POST + SSE escrito direto na `Response` (`@Sse()` do Nest e
@@ -269,7 +274,7 @@ error     { code, message }
 
 ### Erros e bordas
 
-- Ollama indisponível: **503 antes de abrir o stream**, com mensagem
+- Provedor de LLM indisponível: **503 antes de abrir o stream**, com mensagem
   acionável.
 - Erro no meio do stream: evento `error` e mensagem salva com
   `status = 'incomplete'`.
@@ -327,9 +332,10 @@ GitHub Actions:
 
 - `ci.yml` (push/PR): install, Biome, typecheck, testes unitários e de
   integração.
-- `eval.yml` (`workflow_dispatch`): sobe o Ollama, baixa `bge-m3` com
-  cache, ingere e roda `pnpm eval`. Não roda por PR por causa do custo
-  de baixar o modelo (~1.2GB).
+- `eval.yml` (`workflow_dispatch`): sobe o Postgres, ingere e roda
+  `pnpm eval` com o secret `OPENAI_API_KEY`. Não roda por PR porque
+  chama uma API paga e o resultado só muda quando muda chunking,
+  modelo ou prompt.
 
 ## 10. Repositório, commits e documentação
 
