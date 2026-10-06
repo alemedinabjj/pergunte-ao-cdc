@@ -11,7 +11,8 @@
     "test:int": "vitest run -c vitest.int.config.ts",
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/database/migrate.ts",
-    "fetch-laws": "tsx scripts/fetch-laws.ts"
+    "fetch-laws": "tsx scripts/fetch-laws.ts",
+    "ingest": "tsx src/cli/ingest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
