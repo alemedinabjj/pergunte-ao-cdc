@@ -13,7 +13,7 @@ const envSchema = z
     OLLAMA_CHAT_MODEL: z.string().min(1).default('qwen2.5:3b'),
     LLM_PROVIDER: z.enum(['ollama', 'anthropic']).default('ollama'),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
-    ANTHROPIC_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+    ANTHROPIC_MODEL: z.string().min(1).default('claude-opus-5-5'),
     MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.5),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
     LAWS_DIR: z.string().min(1).default('../../data/laws'),
