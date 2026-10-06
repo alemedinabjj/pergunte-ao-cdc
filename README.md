@@ -272,8 +272,10 @@ Resultado da última rodada registrada (`eval/results/latest.md`):
 | **híbrida** | **75,0%** | **83,3%** | **91,7%** | **0,813** |
 
 Essa rodada foi feita com embeddings `bge-m3` (Ollama), antes da troca do padrão para a OpenAI.
-Como a escala de similaridade muda de um modelo para outro, depois de trocar o modelo vale rodar
-`pnpm eval` de novo e ajustar `MIN_SIMILARITY` para o limiar recomendado no relatório.
+Como a escala de similaridade muda de um modelo para outro, o limiar de "não sei" medido com o
+`bge-m3` (0,5) não vale para a OpenAI. Até a próxima rodada, o padrão é um 0,3 provisório e
+conservador (prefere responder a recusar). Depois de trocar o modelo, rode `pnpm eval` e ajuste
+`MIN_SIMILARITY` para o limiar recomendado no relatório.
 
 As perguntas fora do escopo servem para calibrar o "não sei": o relatório mostra, para cada limiar,
 quantas foram recusadas corretamente e quantas perguntas válidas seriam recusadas por engano.

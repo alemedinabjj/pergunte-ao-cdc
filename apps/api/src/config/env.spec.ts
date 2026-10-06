@@ -37,6 +37,10 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ ...base, LLM_PROVIDER: 'anthropic' })).toThrow(/ANTHROPIC_API_KEY/);
   });
 
+  it('uses a conservative similarity threshold until the OpenAI eval calibrates it', () => {
+    expect(loadEnv(base).MIN_SIMILARITY).toBe(0.3);
+  });
+
   it('coerces numeric vars', () => {
     expect(loadEnv({ ...base, MIN_SIMILARITY: '0.62' }).MIN_SIMILARITY).toBe(0.62);
   });

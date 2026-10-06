@@ -18,7 +18,7 @@ const envSchema = z
     OLLAMA_CHAT_MODEL: z.string().min(1).default('qwen2.5:7b'),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_MODEL: z.string().min(1).default('claude-opus-5-5'),
-    MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.5),
+    MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.3),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
     LAWS_DIR: z.string().min(1).default('../../data/laws'),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
