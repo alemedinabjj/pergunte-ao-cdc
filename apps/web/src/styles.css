@@ -1,0 +1,75 @@
+/*
+ * Direção visual: o exemplar do CDC que toda loja deve deixar no balcão (Lei 12.291/2010).
+ * Papel neutro e frio, tinta azul-ardósia, verde institucional para fontes e um único gesto
+ * memorável: o marca-texto amarelo que grifa o trecho citado.
+ * Tipos: Literata (texto de lei, leitura longa) + Instrument Sans (interface).
+ */
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-law: "Literata", Georgia, serif;
+
+  --color-paper: #f7f8f6;
+  --color-sheet: #ffffff;
+  --color-ink: #1c2430;
+  --color-muted: #5b6573;
+  --color-line: #d9dee3;
+  --color-seal: #1f6b52;
+  --color-seal-soft: #e3efe9;
+  --color-marker: #f2d45c;
+  --color-alert: #a3321f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --color-paper: #12171d;
+    --color-sheet: #192029;
+    --color-ink: #e6eaee;
+    --color-muted: #9aa4b1;
+    --color-line: #2c3540;
+    --color-seal: #5cbf98;
+    --color-seal-soft: #1d3329;
+    --color-marker: #a8892b;
+    --color-alert: #f08a76;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
+}
+
+/* O grifo: o marca-texto passa da esquerda para a direita quando a fonte é selecionada. */
+.marker {
+  background-image: linear-gradient(var(--color-marker), var(--color-marker));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  transition: background-size 420ms ease-out;
+}
+.marker[data-selected="true"] {
+  background-size: 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker {
+    transition: none;
+  }
+}
