@@ -19,7 +19,7 @@ import { startTestDatabase, type TestDatabase } from '../support/test-db';
 const FIXTURE = `Art. 49. O consumidor pode desistir do contrato, no prazo de 7 dias, sempre que a contratação ocorrer fora do estabelecimento comercial.
 Art. 18. Os fornecedores respondem solidariamente pelos vícios de qualidade dos produtos.`;
 
-const textParser = (res: NodeJS.ReadableStream, cb: (err: Error | null, body: string) => void) => {
+const textParser = (res: request.Response, cb: (err: Error | null, body: string) => void) => {
   let data = '';
   res.on('data', (chunk: Buffer) => {
     data += chunk.toString();
