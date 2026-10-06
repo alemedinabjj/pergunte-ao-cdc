@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadEnv } from './env';
 
-const base = { DATABASE_URL: 'postgres://cdc:cdc@localhost:5433/cdc', OPENAI_API_KEY: 'sk-test' };
+const base = { DATABASE_URL: 'postgres://cdc:cdc@localhost:5439/cdc', OPENAI_API_KEY: 'sk-test' };
 const local = {
   DATABASE_URL: base.DATABASE_URL,
   EMBEDDING_PROVIDER: 'ollama',
