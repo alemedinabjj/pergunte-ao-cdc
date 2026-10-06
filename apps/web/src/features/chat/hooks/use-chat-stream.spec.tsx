@@ -102,3 +102,23 @@ describe('useChatStream', () => {
     expect(result.current.state.error?.code).toBe('NETWORK');
   });
 });
+
+describe('useChatStream when the stream ends abruptly', () => {
+  it('moves to error if the body ends without done or error', async () => {
+    server.use(
+      http.post('/api/chat', () =>
+        sseResponse([
+          sseBody([
+            { type: 'meta', conversationId: CONVERSATION_ID, messageId: MESSAGE_ID },
+            { type: 'citations', items: [cit()] },
+            { type: 'token', text: 'Pod' },
+          ]),
+        ]),
+      ),
+    );
+    const { result } = renderHook(() => useChatStream());
+    act(() => result.current.send({ question: 'posso devolver?' }));
+    await waitFor(() => expect(result.current.state.status).toBe('error'));
+    expect(result.current.state).toMatchObject({ answer: 'Pod', error: { code: 'STREAM_ENDED' } });
+  });
+});

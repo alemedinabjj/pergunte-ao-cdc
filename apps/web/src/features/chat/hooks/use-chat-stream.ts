@@ -34,6 +34,7 @@ export function useChatStream(callbacks: ChatStreamCallbacks = {}): ChatStream {
 
     void (async () => {
       let conversationId: string | null = null;
+      let finished = false;
       try {
         const response = await fetch(apiUrl('/api/chat'), {
           method: 'POST',
@@ -50,6 +51,7 @@ export function useChatStream(callbacks: ChatStreamCallbacks = {}): ChatStream {
           response.body,
           (event) => {
             dispatch({ type: 'event', event });
+            if (event.type === 'done' || event.type === 'error') finished = true;
             if (event.type === 'meta') {
               conversationId = event.conversationId;
               callbacksRef.current.onMeta?.({ conversationId: event.conversationId });
@@ -58,6 +60,13 @@ export function useChatStream(callbacks: ChatStreamCallbacks = {}): ChatStream {
           controller.signal,
         );
         if (controller.signal.aborted) dispatch({ type: 'aborted' });
+        else if (!finished) {
+          dispatch({
+            type: 'failed',
+            code: 'STREAM_ENDED',
+            message: 'A resposta foi interrompida antes do fim. Tente de novo.',
+          });
+        }
         if (conversationId) callbacksRef.current.onDone?.(conversationId);
       } catch {
         if (controller.signal.aborted) {
