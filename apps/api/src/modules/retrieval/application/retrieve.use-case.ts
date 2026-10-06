@@ -17,7 +17,7 @@ const CANDIDATES = 30;
 @Injectable()
 export class RetrieveUseCase {
   constructor(
-    private readonly retriever: HybridRetriever,
+    @Inject(HybridRetriever) private readonly retriever: HybridRetriever,
     @Inject(EMBEDDER) private readonly embedder: Embedder,
   ) {}
 

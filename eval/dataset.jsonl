@@ -1,0 +1,28 @@
+{"question": "Comprei um tênis pela internet e me arrependi. Posso devolver?", "expected": [{"law": "cdc", "article": "49"}], "tags": ["coloquial"]}
+{"question": "Quanto tempo eu tenho pra reclamar de um defeito no celular?", "expected": [{"law": "cdc", "article": "26"}], "tags": ["coloquial"]}
+{"question": "A loja tem quanto tempo pra consertar meu produto antes de eu pedir outro?", "expected": [{"law": "cdc", "article": "18"}], "tags": ["coloquial"]}
+{"question": "Paguei uma cobrança indevida. Tenho direito a receber em dobro?", "expected": [{"law": "cdc", "article": "42"}], "tags": ["coloquial"]}
+{"question": "Meu nome foi pro cadastro de inadimplentes sem aviso. Isso pode?", "expected": [{"law": "cdc", "article": "43"}], "tags": ["coloquial"]}
+{"question": "O banco só libera o empréstimo se eu fizer um seguro junto. É permitido?", "expected": [{"law": "cdc", "article": "39"}], "tags": ["coloquial"]}
+{"question": "A propaganda mostrava um preço e na loja cobraram outro. O que fazer?", "expected": [{"law": "cdc", "article": "30"}, {"law": "cdc", "article": "35"}], "tags": ["coloquial"]}
+{"question": "Quais são os meus direitos básicos como consumidor?", "expected": [{"law": "cdc", "article": "6"}], "tags": ["coloquial"]}
+{"question": "Uma cláusula do contrato diz que a empresa não responde por nada. Vale?", "expected": [{"law": "cdc", "article": "51"}], "tags": ["coloquial"]}
+{"question": "Fui cobrado de forma constrangedora na frente dos colegas.", "expected": [{"law": "cdc", "article": "42"}], "tags": ["coloquial"]}
+{"question": "Um produto explodiu e me machucou. Quem responde pelo dano?", "expected": [{"law": "cdc", "article": "12"}], "tags": ["coloquial"]}
+{"question": "O orçamento do mecânico vale por quanto tempo?", "expected": [{"law": "cdc", "article": "40"}], "tags": ["coloquial"]}
+{"question": "O fabricante parou de vender peça de reposição do meu fogão. Pode?", "expected": [{"law": "cdc", "article": "32"}], "tags": ["coloquial"]}
+{"question": "Quero quitar o financiamento antes do prazo. Tenho desconto nos juros?", "expected": [{"law": "cdc", "article": "52"}], "tags": ["coloquial"]}
+{"question": "Estou superendividado. A lei me protege de algum jeito?", "expected": [{"law": "cdc", "article": "54-A"}], "tags": ["coloquial"]}
+{"question": "Quanto tempo tenho pra processar por dano causado por produto defeituoso?", "expected": [{"law": "cdc", "article": "27"}], "tags": ["coloquial"]}
+{"question": "A garantia da loja substitui a garantia da lei?", "expected": [{"law": "cdc", "article": "50"}], "tags": ["coloquial"]}
+{"question": "Quais informações um site de vendas é obrigado a mostrar?", "expected": [{"law": "decreto-7962", "article": "2"}], "tags": ["coloquial"]}
+{"question": "A loja online precisa confirmar que recebeu meu pedido?", "expected": [{"law": "decreto-7962", "article": "4"}], "tags": ["coloquial"]}
+{"question": "O SAC pode me deixar esperando no telefone sem limite?", "expected": [{"law": "decreto-11034", "article": "5"}], "tags": ["coloquial"]}
+{"question": "O SAC tem que funcionar 24 horas?", "expected": [{"law": "decreto-11034", "article": "4"}], "tags": ["coloquial"]}
+{"question": "O que diz o art. 49 do CDC?", "expected": [{"law": "cdc", "article": "49"}], "tags": ["ref-exata"]}
+{"question": "Me explica o artigo 18.", "expected": [{"law": "cdc", "article": "18"}], "tags": ["ref-exata"]}
+{"question": "Sobre o que é o art. 54-A?", "expected": [{"law": "cdc", "article": "54-A"}], "tags": ["ref-exata"]}
+{"question": "Qual a pena para quem comete furto?", "expected": [], "tags": ["fora-do-escopo"]}
+{"question": "Como faço para pedir divórcio?", "expected": [], "tags": ["fora-do-escopo"]}
+{"question": "Quantos dias de férias eu tenho por ano no emprego?", "expected": [], "tags": ["fora-do-escopo"]}
+{"question": "Como calcular o IPVA do meu carro?", "expected": [], "tags": ["fora-do-escopo"]}

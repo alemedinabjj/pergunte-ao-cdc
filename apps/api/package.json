@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/database/migrate.ts",
     "fetch-laws": "tsx scripts/fetch-laws.ts",
-    "ingest": "tsx src/cli/ingest.ts"
+    "ingest": "tsx src/cli/ingest.ts",
+    "eval": "tsx src/eval/run-eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
