@@ -229,3 +229,54 @@ describe('AnswerQuestionUseCase.prepare', () => {
     );
   });
 });
+
+describe('AnswerQuestionUseCase follow-up rewriting', () => {
+  const history = [
+    { role: 'user' as const, content: 'posso devolver?' },
+    { role: 'assistant' as const, content: 'Pode [1].' },
+  ];
+  const standalone = 'Qual o prazo de arrependimento em compra pela internet?';
+
+  it('first message is not rewritten', async () => {
+    const llm = new FakeLlmClient({ completions: [standalone], chunks: ['ok'] });
+    const { useCase, repo, retrieve } = setup(llm);
+    await collect(useCase.run(turn, new AbortController().signal));
+    expect(llm.requests).toHaveLength(1);
+    expect(retrieve.lastInput?.text).toBe('Posso devolver?');
+    expect(repo.users[0]?.standaloneQuery).toBeNull();
+  });
+
+  it('follow-up is rewritten and retrieval receives the standalone question', async () => {
+    const llm = new FakeLlmClient({ completions: [standalone], chunks: ['ok'] });
+    const { useCase, repo, retrieve } = setup(llm);
+    await collect(
+      useCase.run({ ...turn, history, question: 'e se for online?' }, new AbortController().signal),
+    );
+    expect(retrieve.lastInput?.text).toBe(standalone);
+    expect(repo.users.at(-1)).toMatchObject({
+      content: 'e se for online?',
+      standaloneQuery: standalone,
+    });
+    expect(llm.requests.at(-1)?.messages[0]?.content).toContain(`Pergunta: ${standalone}`);
+  });
+
+  it('falls back to the original question when the rewrite fails', async () => {
+    const llm = new FakeLlmClient({ completions: [], chunks: ['ok'] });
+    const { useCase, retrieve } = setup(llm);
+    const events = await collect(
+      useCase.run({ ...turn, history, question: 'e se for online?' }, new AbortController().signal),
+    );
+    expect(retrieve.lastInput?.text).toBe('e se for online?');
+    expect(events.at(-1)?.type).toBe('done');
+  });
+
+  it('prepare loads the last messages of an existing conversation', async () => {
+    const { useCase, repo } = setup();
+    repo.historyRows = history;
+    const prepared = await useCase.prepare({
+      question: 'e se for online?',
+      conversationId: CONVERSATION_ID,
+    });
+    expect(prepared.history).toEqual(history);
+  });
+});

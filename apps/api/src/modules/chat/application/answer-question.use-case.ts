@@ -13,6 +13,7 @@ import {
   type NewAssistantMessage,
 } from '../infrastructure/conversations.repository';
 import { buildAnswerPrompt, NOT_FOUND_ANSWER } from '../prompts/answer.prompt';
+import { buildRewritePrompt, sanitizeRewrite } from '../prompts/rewrite.prompt';
 
 export class ConversationNotFoundError extends Error {
   override readonly name = 'ConversationNotFoundError';
@@ -34,6 +35,7 @@ type RetrievePort = Pick<RetrieveUseCase, 'execute'>;
 type AnswerConfig = Pick<Env, 'MIN_SIMILARITY' | 'LLM_TIMEOUT_MS'>;
 
 const TITLE_MAX = 60;
+const HISTORY_LIMIT = 6;
 
 function titleFrom(question: string): string {
   const trimmed = question.trim();
@@ -60,7 +62,8 @@ export class AnswerQuestionUseCase {
       if (!(await this.conversations.exists(input.conversationId))) {
         throw new ConversationNotFoundError(`Conversa ${input.conversationId} não existe`);
       }
-      return { ...base, conversationId: input.conversationId, isNew: false };
+      const history = await this.conversations.history(input.conversationId, HISTORY_LIMIT);
+      return { ...base, history, conversationId: input.conversationId, isNew: false };
     }
     const conversationId = await this.conversations.create(titleFrom(input.question));
     return { ...base, conversationId, isNew: true };
@@ -93,9 +96,14 @@ export class AnswerQuestionUseCase {
     yield { type: 'meta', conversationId: turn.conversationId, messageId };
 
     try {
-      await this.conversations.addUserMessage(turn.conversationId, turn.question, null);
+      const standalone = await this.standaloneQuestion(turn, llmSignal);
+      await this.conversations.addUserMessage(
+        turn.conversationId,
+        turn.question,
+        standalone === turn.question ? null : standalone,
+      );
       const result = await this.retrieve.execute(
-        { text: turn.question, lawSlug: turn.lawSlug },
+        { text: standalone, lawSlug: turn.lawSlug },
         llmSignal,
       );
 
@@ -112,7 +120,7 @@ export class AnswerQuestionUseCase {
       yield { type: 'citations', items: citations };
 
       model = this.llm.model;
-      const prompt = buildAnswerPrompt(turn.question, citations);
+      const prompt = buildAnswerPrompt(standalone, citations);
       for await (const piece of this.llm.stream(prompt, llmSignal)) {
         answer += piece;
         yield { type: 'token', text: piece };
@@ -134,6 +142,22 @@ export class AnswerQuestionUseCase {
       if (!saved) {
         await save('incomplete', []).catch((error: unknown) => this.logger.error(error));
       }
+    }
+  }
+
+  /** Follow-ups ("e se for online?") viram perguntas independentes antes da busca. */
+  private async standaloneQuestion(turn: PreparedTurn, signal: AbortSignal): Promise<string> {
+    if (turn.history.length === 0) return turn.question;
+    try {
+      const output = await this.llm.complete(
+        buildRewritePrompt(turn.history, turn.question),
+        signal,
+      );
+      return sanitizeRewrite(output, turn.question);
+    } catch (error) {
+      if (!(error instanceof LlmRequestError)) throw error;
+      this.logger.warn('Reescrita da pergunta falhou; usando a pergunta original');
+      return turn.question;
     }
   }
 
