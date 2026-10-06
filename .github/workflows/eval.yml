@@ -1,0 +1,46 @@
+name: Avaliação do retrieval
+
+# Manual: chama a API paga da OpenAI e o resultado só muda quando mudam
+# chunking, modelo de embedding ou a query de busca.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17
+        env:
+          POSTGRES_DB: cdc
+          POSTGRES_USER: cdc
+          POSTGRES_PASSWORD: cdc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cdc -d cdc"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://cdc:cdc@localhost:5432/cdc
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm ingest
+      - run: pnpm eval
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: eval/results/latest.md
