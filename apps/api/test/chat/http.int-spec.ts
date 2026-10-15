@@ -1,6 +1,6 @@
 import { request as httpRequest } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,7 +29,7 @@ const textParser = (res: request.Response, cb: (err: Error | null, body: string)
 
 describe('HTTP API', () => {
   let t: TestDatabase;
-  let app: INestApplication;
+  let app: NestExpressApplication;
   const health = {
     up: true,
     unavailableMessage: 'Confira a OPENAI_API_KEY.',
@@ -71,7 +71,7 @@ describe('HTTP API', () => {
       .overrideProvider(LLM_HEALTH)
       .useValue(health)
       .compile();
-    app = moduleRef.createNestApplication();
+    app = moduleRef.createNestApplication<NestExpressApplication>();
     configureApp(app);
     await app.init();
   });

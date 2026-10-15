@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nestjs",
+  "installCommand": "cd ../.. && HUSKY=0 pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm build:contracts && pnpm --filter api build"
+}

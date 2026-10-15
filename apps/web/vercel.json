@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "cd ../.. && HUSKY=0 pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm build:contracts && pnpm --filter web build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://pergunte-ao-cdc-api.vercel.app/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
