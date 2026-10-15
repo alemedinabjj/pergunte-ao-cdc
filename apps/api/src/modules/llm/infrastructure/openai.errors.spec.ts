@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { describe, expect, it } from 'vitest';
 import { LlmRequestError, LlmUnavailableError } from '../domain/errors';
-import { mapOpenAiError } from './openai.errors';
+import { mapOpenAiError, OPENROUTER } from './openai.errors';
 
 describe('mapOpenAiError', () => {
   it('maps connection failures, rate limits and 5xx to LlmUnavailableError', () => {
@@ -37,5 +37,15 @@ describe('mapOpenAiError', () => {
   it('passes unknown errors through', () => {
     const error = new Error('boom');
     expect(mapOpenAiError(error)).toBe(error);
+  });
+});
+
+describe('mapOpenAiError for OpenRouter', () => {
+  it('names OpenRouter and its key variable', () => {
+    const mapped = mapOpenAiError(
+      new OpenAI.AuthenticationError(401, undefined, 'bad', new Headers()),
+      OPENROUTER,
+    );
+    expect((mapped as Error).message).toContain('OPENROUTER_API_KEY');
   });
 });

@@ -45,3 +45,18 @@ describe('OpenAiEmbedder', () => {
     await expect(embedder.embed(['a'])).rejects.toBeInstanceOf(LlmUnavailableError);
   });
 });
+
+describe('OpenAiEmbedder for models without a dimensions parameter', () => {
+  it('omits dimensions and rejects vectors of the wrong size', async () => {
+    const create = vi.fn(async () => ({ data: [{ index: 0, embedding: [0.1, 0.2] }] }));
+    const embedder = new OpenAiEmbedder(
+      { embeddings: { create } },
+      { model: 'liquid/lfm-2.5-embedding-350m:free', dimensions: 1024, sendDimensions: false },
+    );
+    await expect(embedder.embed(['a'])).rejects.toThrow('1024');
+    expect(create).toHaveBeenCalledWith(
+      { model: 'liquid/lfm-2.5-embedding-350m:free', input: ['a'], encoding_format: 'float' },
+      { signal: undefined },
+    );
+  });
+});

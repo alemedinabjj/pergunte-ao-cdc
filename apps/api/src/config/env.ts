@@ -7,11 +7,15 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     PORT: z.coerce.number().int().positive().default(3100),
     DATABASE_URL: z.url(),
-    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama']).default('openai'),
-    LLM_PROVIDER: z.enum(['openai', 'anthropic', 'ollama']).default('openai'),
+    EMBEDDING_PROVIDER: z.enum(['openai', 'openrouter', 'ollama']).default('openai'),
+    LLM_PROVIDER: z.enum(['openai', 'openrouter', 'anthropic', 'ollama']).default('openai'),
     OPENAI_API_KEY: z.string().min(1).optional(),
     OPENAI_EMBED_MODEL: z.string().min(1).default('text-embedding-3-small'),
     OPENAI_CHAT_MODEL: z.string().min(1).default('gpt-6-luna'),
+    OPENROUTER_API_KEY: z.string().min(1).optional(),
+    // Gratuitos: ~50 requisições/dia sem créditos na conta. O de embeddings já gera 1024 dimensões.
+    OPENROUTER_EMBED_MODEL: z.string().min(1).default('liquid/lfm-2.5-embedding-350m:free'),
+    OPENROUTER_CHAT_MODEL: z.string().min(1).default('google/gemma-4-31b-it:free'),
     OLLAMA_BASE_URL: z.url().default('http://localhost:11434'),
     OLLAMA_EMBED_MODEL: z.string().min(1).default('bge-m3'),
     EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1024),
@@ -30,6 +34,15 @@ const envSchema = z
         code: 'custom',
         path: ['OPENAI_API_KEY'],
         message: 'obrigatória quando EMBEDDING_PROVIDER ou LLM_PROVIDER é openai',
+      });
+    }
+    const usesOpenRouter =
+      env.EMBEDDING_PROVIDER === 'openrouter' || env.LLM_PROVIDER === 'openrouter';
+    if (usesOpenRouter && !env.OPENROUTER_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OPENROUTER_API_KEY'],
+        message: 'obrigatória quando EMBEDDING_PROVIDER ou LLM_PROVIDER é openrouter',
       });
     }
     if (env.LLM_PROVIDER === 'anthropic' && !env.ANTHROPIC_API_KEY) {

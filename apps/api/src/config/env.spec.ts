@@ -41,6 +41,21 @@ describe('loadEnv', () => {
     expect(loadEnv(base).MIN_SIMILARITY).toBe(0.3);
   });
 
+  it('requires OPENROUTER_API_KEY when a provider is openrouter and defaults to free models', () => {
+    const { OPENAI_API_KEY: _, ...noKey } = base;
+    expect(() =>
+      loadEnv({ ...noKey, EMBEDDING_PROVIDER: 'openrouter', LLM_PROVIDER: 'openrouter' }),
+    ).toThrow('OPENROUTER_API_KEY');
+    const env = loadEnv({
+      ...noKey,
+      EMBEDDING_PROVIDER: 'openrouter',
+      LLM_PROVIDER: 'openrouter',
+      OPENROUTER_API_KEY: 'sk-or-test',
+    });
+    expect(env.OPENROUTER_CHAT_MODEL).toBe('google/gemma-4-31b-it:free');
+    expect(env.OPENROUTER_EMBED_MODEL).toBe('liquid/lfm-2.5-embedding-350m:free');
+  });
+
   it('coerces numeric vars', () => {
     expect(loadEnv({ ...base, MIN_SIMILARITY: '0.62' }).MIN_SIMILARITY).toBe(0.62);
   });
